@@ -1,0 +1,38 @@
+.dygraph {
+    position: relative;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.dygraph-axis-label {
+    z-index: 10;
+    line-height: normal;
+    overflow: hidden;
+    color: #fff;
+}
+
+.dygraph-title {
+    font-weight: normal;
+}
+.dygraph-legend {
+    position: absolute;
+    width: 75px;
+    height: 37px;
+    background-color: rgba(200, 200, 255, 0.8);
+    color: black;
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 6px;
+}
+
+.dygraph .dygraph-legend > span {
+    display: none;
+    top: 24px;
+}
+
+.dygraph .dygraph-legend > span.highlight {
+    display: inline-block;
+    bottom: 0;
+    position: absolute;
+}
+

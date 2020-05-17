@@ -3,8 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Dinamômetro</title>
+
+    <!-- Estilização principal da página -->
+    <link rel="stylesheet" href="main.css">
+
+    <!-- Biblioteca Dygraph -->
+    <script src="libs/dygraph/js/dygraph.min.js"></script> <!-- Código da biblioteca Dygraph -->
+    <link rel="stylesheet" href="libs/dygraph/css/dygraph.min.css"> <!-- Código de estilização da biblioteca Dygraph -->
+    <link rel="stylesheet" href="libs/dygraph/css/customizacao-dygraph.css"> <!-- Código de estilização da biblioteca Dygraph customizado -->
+
+    <!-- Biblioteca Gauge -->
+    <script src="libs/gauge/js/gauge.min.js"></script> <!-- Código da biblioteca Gauge -->
+
 </head>
 <body>
-    Iniciando o projeto do Dinamômetro...
+    <div id="header">
+
+    </div>
+
+    <div id="container">
+        <div id="gauges">
+            <div id="rpm-gauge" class="gauge">
+                <canvas id="canvas-rpm-gauge"></canvas>
+            </div>
+        </div>
+        <div id="chart">
+            <div id="data-dygraph" class="dygraph"></div>
+        </div>
+    </div>
+    <script src="main.js"></script>
 </body>
 </html>
