@@ -32,7 +32,7 @@
 
 
 body {
-    background-color: #111;
+    background-color: #000;
     color: white;
     margin: 0;
     padding: 0;
@@ -46,13 +46,19 @@ body {
 
 #gauges {
     margin: 0 auto;
-    width: 80%;
+    width: fit-content;
+    padding: 10px 0;
 }
 
-#chart {
+#chart-analyze {
     position: relative;
     margin: 0 auto;
     width: 80%;
     height: 300px;
 
+}
+
+#gauges div {
+    display: inline-block;
+    text-align: center;
 }

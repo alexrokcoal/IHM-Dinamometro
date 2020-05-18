@@ -23,12 +23,32 @@
 
     <div id="container">
         <div id="gauges">
-            <div id="rpm-gauge" class="gauge">
-                <canvas id="canvas-rpm-gauge"></canvas>
-            </div>
+
+
+                <div>
+                    <span>Avanço Real</span><br>
+                    <canvas id="canvas-avanco-real-gauge"></canvas>
+                </div>
+                <div>
+                    <span>Torque</span><br>
+                    <canvas id="canvas-torque-gauge"></canvas>
+                </div>
+                <div>
+                    <span>RPM Motor</span><br>
+                    <canvas id="canvas-rpm-gauge"></canvas>
+                </div>
+                <div>
+                    <span>Sonda Lambda</span><br>
+                    <canvas id="canvas-lambda-gauge"></canvas>
+                </div>
+                <div>
+                    <span>Voltagem Bateria</span><br>
+                    <canvas id="canvas-voltagem-bateria-gauge"></canvas>
+                </div>
+
         </div>
-        <div id="chart">
-            <div id="data-dygraph" class="dygraph"></div>
+        <div id="chart-analyze">
+            <div id="analyze-dygraph" class="dygraph"></div>
         </div>
     </div>
     <script src="main.js"></script>
