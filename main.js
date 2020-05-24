@@ -2,18 +2,78 @@ window.onload = function() { // início função auto-invocável
 
     function Dinamometro() {
         // Dados do dinamômetro
-        this.data = [];
+        this.dataAnalyse = [];
 
-        // Definição dos gauges
-        this.rpmGauge = null;
-        this.lambdaGauge = null;
-        this.torqueGauge = null;
-        this.voltagemBateriaGauge = null;
-        this.avancoRealGauge = null;
+        // Dados do gráfico de configuração do avanço
+        this.dataAdvancedConfiguration = [
+            [0, 0, 0],
+            [3000, 13, 11],
+            [15000, 22, 18],
+            [15000, 0, 0],
+            [16000, 0, 0]
+        ];
 
-        // Definição dos gráficos
-        this.analyzeDygraph = null;
-        this.AdvancedConfigurationDygraph = null;
+        // Dados recebidos via websocket
+        this.jsonDataReveived;
+
+        this.mapaSelecionado = "";
+        this.idSelecionado = 0;
+        this.pointSelecionado = {
+            canvasx: 0,
+            canvasy: 0,
+            live: false
+        };
+        this.mouse = {x:0, y:0};
+
+        this.updatePointSelecionado = function () {
+            this.pointSelecionado.canvasx = DinamometroCharts.advancedConfiguration.toDomXCoord(this.dataAdvancedConfiguration[this.idSelecionado][0]);
+            this.pointSelecionado.canvasy = DinamometroCharts.advancedConfiguration.toDomYCoord(this.dataAdvancedConfiguration[this.idSelecionado][DinamometroCharts.advancedConfiguration.indexFromSetName(this.mapaSelecionado)]);
+        };
+
+        this.drawPointSelecionado = function(ctx) {
+            if(this.pointSelecionado.live) {
+                this.updatePointSelecionado();
+                x = this.pointSelecionado.canvasx;
+                y = this.pointSelecionado.canvasy;
+                ctx = ctx || DinamometroCharts.advancedConfiguration.hidden_ctx_;
+                var cor = DinamometroCharts.advancedConfiguration.colorsMap_[this.mapaSelecionado];
+
+                ctx.strokeStyle = cor;
+                ctx.lineWidth = 3;
+                ctx.fillStyle = "#111";
+                ctx.beginPath();
+                ctx.arc(x,y,9 ,0,Math.PI*2,true);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.fill();
+
+
+                ctx.fillStyle = cor;
+                ctx.textAlign = "center";
+                ctx.font='bold 11px Arial';
+                ctx.fillText(parseFloat(DinamometroCharts.advancedConfiguration.toDataYCoord(y).toFixed(2)), x, y+4);
+
+                // SETA PARA BAIXO
+                ctx.beginPath();
+                ctx.lineWidth = .7;
+                ctx.moveTo(x,y+13);
+                ctx.lineTo(x+4,y+13);
+                ctx.lineTo(x,y+18);
+                ctx.lineTo(x-4,y+13);
+                ctx.lineTo(x,y+13);
+                ctx.stroke();
+
+                // SETA PARA CIMA
+                ctx.beginPath();
+                ctx.lineWidth = .7;
+                ctx.moveTo(x,y-13);
+                ctx.lineTo(x+4,y-13);
+                ctx.lineTo(x,y-18);
+                ctx.lineTo(x-4,y-13);
+                ctx.lineTo(x,y-13);
+                ctx.stroke();
+            }
+        };
 
         // Flags
         this.isRealtimeDrawing = false;
@@ -24,98 +84,111 @@ window.onload = function() { // início função auto-invocável
 
         this.dashboardMode = this.DASHBOARD_MODE_BASIC;
 
-        var generateRandomDataInicio = window.performance.now();
-        var generateRandomDataTempo = generateRandomDataInicio;
+        this.draw = function (idx) {
 
-        this.generateRandomData = function () {
-            generateRandomDataTempo = (window.performance.now() - generateRandomDataInicio)/1000;
-            var dados = {
-                tempo: generateRandomDataTempo,
-                rpm: Math.round(Math.sin(generateRandomDataTempo*5)*5000)+5000,
-                lambda: parseFloat(Math.sin(generateRandomDataTempo).toFixed(2)),
-                torque: parseFloat(((Math.sin(generateRandomDataTempo*5)*2)+10).toFixed(2)),
-                voltagemBateria: parseFloat(((Math.sin(generateRandomDataTempo)*2)+10).toFixed(2)),
-                avancoReal: parseFloat(((Math.sin(generateRandomDataTempo*5)*2)+23).toFixed(2))
+            var data = {
+                rpm: 0,
+                lambda: 0,
+                torque: 0,
+                batteryVoltage: 0,
+                avancoReal: 0
             };
 
-            return dados;
-        };
-
-        this.rpmGauge = null;
-        this.lambdaGauge = null;
-        this.torqueGauge = null;
-        this.voltagemBateriaGauge = null;
-        this.avancoRealGauge = null;
-
-        this.draw = function (idx) {
-            var rpmValue;
-            var lambdaValue;
-            var torqueValue;
-            var voltagemBateriaValue;
-            var avancoRealValue;
+            if(idx && !this.isRealtimeDrawing) {
+                data.rpm = this.dataAnalyse[idx][1]*100;
+                data.lambda = this.dataAnalyse[idx][2];
+                data.torque = this.dataAnalyse[idx][3];
+                data.batteryVoltage = this.dataAnalyse[idx][4];
+                data.avancoReal = this.dataAnalyse[idx][5];
+            } else {
+                data.rpm = this.dataAnalyse[this.dataAnalyse.length-1][1]*100;
+                data.lambda = this.dataAnalyse[this.dataAnalyse.length-1][2];
+                data.torque = this.dataAnalyse[this.dataAnalyse.length-1][3];
+                data.batteryVoltage = this.dataAnalyse[this.dataAnalyse.length-1][4];
+                data.avancoReal = this.dataAnalyse[this.dataAnalyse.length-1][5];
+            }
 
             if(this.isRealtimeDrawing) {
-                this.analyzeDygraph.updateOptions( { 'file': this.data } );
+                DinamometroCharts.analyze.updateOptions( { 'file': this.dataAnalyse } );
             }
 
-            if(idx && !this.isRealtimeDrawing) {
-                rpmValue = this.data[idx][1];
-                lambdaValue = this.data[idx][2];
-                torqueValue = this.data[idx][3];
-                voltagemBateriaValue = this.data[idx][4];
-                avancoRealValue = this.data[idx][5];
-            } else {
-                rpmValue = this.data[this.data.length-1][1];
-                lambdaValue = this.data[this.data.length-1][2];
-                torqueValue = this.data[this.data.length-1][3];
-                voltagemBateriaValue = this.data[this.data.length-1][4];
-                avancoRealValue = this.data[this.data.length-1][5];
-            }
-
-            this.rpmGauge.update({ units: rpmValue + ' RPM', value: rpmValue });
-            this.lambdaGauge.update({ units: lambdaValue + ' V', value: lambdaValue });
-            this.torqueGauge.update({ units: torqueValue + ' Kgf/m', value: torqueValue });
-            this.voltagemBateriaGauge.update({ units: voltagemBateriaValue + ' V', value: voltagemBateriaValue });
-            this.avancoRealGauge.update({ units: avancoRealValue + ' °', value: avancoRealValue });
+            DinamometroGauges.updateAll(data);
         };
 
         this.init = function () {
-            this.initGauges();
-            this.initDygraphs();
+
+            // Inicializa os gauges
+            DinamometroGauges.init();
+
+            // Inicializa os charts
+            DinamometroCharts.init();
+
+            DinamometroCharts.analyze.updateOptions({
+                drawHighlightPointCallback: function(g, seriesName, canvasContext, cx, cy, color, pointSize, idx){
+                    if(!ApiDinamometro.isRealtimeDrawing && g.indexFromSetName(seriesName)==1) ApiDinamometro.draw(idx);
+                }
+            });
+
+            DinamometroCharts.advancedConfiguration.updateOptions({
+                file: this.dataAdvancedConfiguration,
+                pointClickCallback: function(e, point) {
+                    ApiDinamometro.mapaSelecionado = point.name;
+                    ApiDinamometro.idSelecionado = point.idx;
+                    ApiDinamometro.pointSelecionado.live = true;
+                    ApiDinamometro.mouse.x = e.x;
+                    ApiDinamometro.mouse.y = e.y;
+                    DinamometroCharts.advancedConfiguration.updateOptions( {} );
+                    ApiDinamometro.drawPointSelecionado();
+                },
+                unhighlightCallback: function(x, seriesName, canvasContext, cx, cy, color, pointSize, idx){
+                    DinamometroCharts.advancedConfiguration.clearSelection();
+                    DinamometroCharts.advancedConfiguration.updateOptions( {} );
+                },
+                drawHighlightPointCallback: function(g, seriesName, canvasContext, cx, cy, color, pointSize, idx){
+                    ApiDinamometro.drawPointSelecionado(g.canvas_ctx_);
+                },
+                drawCallback: function(g, seriesName, canvasContext, cx, cy, color, pointSize){
+                    ApiDinamometro.drawPointSelecionado();
+                },
+                clickCallback: function(e, x, points) {
+                    if(!(ApiDinamometro.mouse.x == e.x && ApiDinamometro.mouse.y == e.y)) {
+                        ApiDinamometro.pointSelecionado.live = false;
+                        DinamometroCharts.advancedConfiguration.updateOptions( {} );
+                    }
+                }
+            });
         };
 
         this.stopRealtimeDrawing = function () {
             this.isRealtimeDrawing = false;
-
-            this.rpmGauge.animation.duration = 100;
-            this.lambdaGauge.animation.duration = 100;
-            this.torqueGauge.animation.duration = 100;
-            this.voltagemBateriaGauge.animation.duration = 100;
-            this.avancoRealGauge.animation.duration = 100;
+            DinamometroGauges.setAnimationDuration(500);
         };
 
         this.startRealtimeDrawing = function () {
             this.isRealtimeDrawing = true;
+            DinamometroGauges.setAnimationDuration(0);
 
-            this.rpmGauge.animation.duration = 0;
-            this.lambdaGauge.animation.duration = 0;
-            this.torqueGauge.animation.duration = 0;
-            this.voltagemBateriaGauge.animation.duration = 0;
-            this.avancoRealGauge.animation.duration = 0;
+            var ultimoTempo = 0;
+            var contPerda = 0;
+            this.dataAnalyse = [];
+            window.dataData = null;
 
             function loop() {
+                if (this.jsonDataReveived) {
+                    if(this.dataAnalyse.length>=50 && this.jsonDataReveived.tempo!=ultimoTempo) this.dataAnalyse.splice(0, 1);
 
-                var dados = this.generateRandomData();
+                    this.dataAnalyse.push([parseFloat(this.jsonDataReveived.tempo.toFixed(2)), this.jsonDataReveived.rpm/100, this.jsonDataReveived.lambda, this.jsonDataReveived.torque, this.jsonDataReveived.voltagemBateria, this.jsonDataReveived.avancoReal]);
 
-                if(dados.tempo>2) this.data.splice(0, 1);
+                    if(this.dataAnalyse.length>0) this.draw();
 
+                    if (this.jsonDataReveived.tempo==ultimoTempo){
+                        contPerda++;
+                    }
 
+                    ultimoTempo = this.jsonDataReveived.tempo;
+                }
 
-                this.data.push([parseFloat(dados.tempo.toFixed(2)), dados.rpm, dados.lambda, dados.torque, dados.voltagemBateria, dados.avancoReal]);
-
-                this.draw();
-
-                if(dados.tempo<3) {
+                if(!(contPerda>=50)) {
                     requestAnimationFrame(loop.bind(this));
                 } else {
                     this.stopRealtimeDrawing();
@@ -123,288 +196,6 @@ window.onload = function() { // início função auto-invocável
             }
 
             loop.bind(this)();
-
-
-
-        };
-        this.stop = function () {};
-
-
-        this.initGauges = function () {
-            var gaugesWidth = 150;
-            var gaugesHeight = 150;
-
-            /**
-             * Definição do gauge de rpm
-             * @type {RadialGauge}
-             */
-            this.rpmGauge = new RadialGauge({
-                renderTo: 'canvas-rpm-gauge',
-                width: gaugesWidth+40,
-                height: gaugesHeight+40,
-                units: 'RPM',
-                title: null,
-                value: 0,
-                minValue: 0,
-                maxValue: 15000,
-                majorTicks: [
-                    '0','2000','4000','6000','8000','1000','12000','14000','16000'
-                ],
-                highlights: [
-                    { from: 0, to: 3000, color: 'rgba(0,255,0,.15)' },
-                    { from: 3000, to: 6000, color: 'rgba(255,255,0,.15)' },
-                    { from: 6000, to: 9000, color: 'rgba(255,30,0,.25)' },
-                    { from: 9000, to: 12000, color: 'rgba(255,0,225,.25)' },
-                    { from: 12000, to: 15000, color: 'rgba(0,0,255,.25)' }
-                ],
-                minorTicks: 2,
-                strokeTicks: false,
-                colorPlate: '#000',
-                colorMajorTicks: '#f5f5f5',
-                colorMinorTicks: '#ddd',
-                colorTitle: '#fff',
-                colorUnits: '#fff',
-                colorNumbers: '#fff',
-                colorNeedle: 'rgb(240,35,31)',
-                colorNeedleEnd: 'rgb(240,35,31)',
-                highlightsWidth: 10,
-                numbersMargin: -2,
-                barWidth: 0,
-                barStrokeWidth: 0,
-                needleShadow: false,
-                //barProgress: 1,
-                borders: false,
-                barShadow: 0,
-                valueBox: false,
-                animationRule: 'bounce',
-                animationDuration: 100
-            }).draw();
-
-            this.lambdaGauge = new RadialGauge({
-                renderTo: 'canvas-lambda-gauge',
-                width: gaugesWidth,
-                height: gaugesHeight,
-                units: 'Volts',
-                title: null,
-                value: 0,
-                minValue: 0,
-                maxValue: 2,
-                majorTicks: [
-                    '0','0.25','0.50','0.75','1','1.25','1.50','1.75','2'
-                ],
-                highlights: [
-                    { from: 0, to: 2, color: 'rgba(20,20,20,1)' }
-                ],
-                minorTicks: 2,
-                strokeTicks: false,
-                colorPlate: '#000',
-                colorMajorTicks: '#f5f5f5',
-                colorMinorTicks: '#ddd',
-                colorTitle: '#fff',
-                colorUnits: '#fff',
-                colorNumbers: '#fff',
-                colorNeedle: 'rgb(240,35,31)',
-                colorNeedleEnd: 'rgb(240,35,31)',
-                highlightsWidth: 10,
-                numbersMargin: -2,
-                barWidth: 0,
-                barStrokeWidth: 0,
-                needleShadow: false,
-                //barProgress: 1,
-                borders: false,
-                barShadow: 0,
-                valueBox: false,
-                animationRule: 'bounce',
-                animationDuration: 100
-            }).draw();
-
-            this.torqueGauge = new RadialGauge({
-                renderTo: 'canvas-torque-gauge',
-                width: gaugesWidth,
-                height: gaugesHeight,
-                units: 'Kgf.m',
-                title: null,
-                value: 0,
-                minValue: 0,
-                maxValue: 20,
-                majorTicks: [
-                    '0','2.5','5','7.5','10','12.5','15','17.5','20'
-                ],
-                highlights: [
-                    { from: 0, to: 20, color: 'rgba(20,20,20,1)' }
-                ],
-                minorTicks: 2,
-                strokeTicks: false,
-                colorPlate: '#000',
-                colorMajorTicks: '#f5f5f5',
-                colorMinorTicks: '#ddd',
-                colorTitle: '#fff',
-                colorUnits: '#fff',
-                colorNumbers: '#fff',
-                colorNeedle: 'rgb(240,35,31)',
-                colorNeedleEnd: 'rgb(240,35,31)',
-                highlightsWidth: 10,
-                numbersMargin: -2,
-                barWidth: 0,
-                barStrokeWidth: 0,
-                needleShadow: false,
-                //barProgress: 1,
-                borders: false,
-                barShadow: 0,
-                valueBox: false,
-                animationRule: 'bounce',
-                animationDuration: 100
-            }).draw();
-
-            this.voltagemBateriaGauge = new RadialGauge({
-                renderTo: 'canvas-voltagem-bateria-gauge',
-                width: gaugesWidth,
-                height: gaugesHeight,
-                units: 'V',
-                title: null,
-                value: 0,
-                minValue: 0,
-                maxValue: 15,
-                majorTicks: [
-                    '0','2.5','5','7.5','10','12.5','15'
-                ],
-                highlights: [
-                    { from: 0, to: 15, color: 'rgba(20,20,20,1)' }
-                ],
-                minorTicks: 2,
-                strokeTicks: false,
-                colorPlate: '#000',
-                colorMajorTicks: '#f5f5f5',
-                colorMinorTicks: '#ddd',
-                colorTitle: '#fff',
-                colorUnits: '#fff',
-                colorNumbers: '#fff',
-                colorNeedle: 'rgb(240,35,31)',
-                colorNeedleEnd: 'rgb(240,35,31)',
-                highlightsWidth: 10,
-                numbersMargin: -2,
-                barWidth: 0,
-                barStrokeWidth: 0,
-                needleShadow: false,
-                //barProgress: 1,
-                borders: false,
-                barShadow: 0,
-                valueBox: false,
-                animationRule: 'bounce',
-                animationDuration: 100
-            }).draw();
-
-            this.avancoRealGauge = new RadialGauge({
-                renderTo: 'canvas-avanco-real-gauge',
-                width: gaugesWidth,
-                height: gaugesHeight,
-                units: '°APMS',
-                title: null,
-                value: 0,
-                minValue: 0,
-                maxValue: 30,
-                majorTicks: [
-                    '0','2.5','5','15','20','25','30'
-                ],
-                highlights: [
-                    { from: 0, to: 30, color: 'rgba(20,20,20,1)' }
-                ],
-                minorTicks: 2,
-                strokeTicks: false,
-                colorPlate: '#000',
-                colorMajorTicks: '#f5f5f5',
-                colorMinorTicks: '#ddd',
-                colorTitle: '#fff',
-                colorUnits: '#fff',
-                colorNumbers: '#fff',
-                colorNeedle: 'rgb(240,35,31)',
-                colorNeedleEnd: 'rgb(240,35,31)',
-                highlightsWidth: 10,
-                numbersMargin: -2,
-                barWidth: 0,
-                barStrokeWidth: 0,
-                needleShadow: false,
-                //barProgress: 1,
-                borders: false,
-                barShadow: 0,
-                valueBox: false,
-                animationRule: 'bounce',
-                animationDuration: 100
-            }).draw();
-        };
-
-        this.initDygraphs = function () {
-            /**
-             * Definição do gráfico de análise dos dados
-             * @type {Dygraph}
-             */
-            this.analyzeDygraph = new Dygraph(document.getElementById("analyze-dygraph"), this.data,
-                {
-                    titleHeight: 30,
-                    title: null,
-                    ylabel: null,
-                    xlabel: "Tempo (s)",
-                    labels: ['Tempo', 'RPM', 'Lambda', 'Torque', 'Bateria', 'Avanço'],
-                    labelsSeparateLines: true,
-                    legend: "follow",
-                    valueRange: [0, 15000],
-                    drawPoints: true,
-                    colors: ["blue", "green", "yellow", "red", "orange"],
-                    fillGraph: true,
-                    fillAlpha: 0.2,
-                    strokeWidth: 1,
-                    highlightSeriesOpts: {
-                        strokeWidth: 1,
-                        highlightCircleSize: 4
-                    },
-                    highlightSeriesBackgroundAlpha: 1,
-                    showRangeSelector: true,
-                    rangeSelectorPlotFillColor: "#0e0e41",
-                    rangeSelectorPlotFillGradientColor: "",
-                    rangeSelectorPlotLineWidth: 1,
-                    rangeSelectorPlotStrokeColor: "blue",
-                    rangeSelectorAlpha: 0.1,
-                    drawHighlightPointCallback: function(g, seriesName, canvasContext, cx, cy, color, pointSize, idx){
-                        if(!ApiDinamometro.isRealtimeDrawing && g.indexFromSetName(seriesName)==1) ApiDinamometro.draw(idx);
-                    },
-                    interactionModel : {
-                        'mousedown' : function (event, g, context) {
-                            context.initializeMouseDown(event, g, context);
-                            if (event.altKey || event.shiftKey) {
-                                Dygraph.startZoom(event, g, context);
-                            } else {
-                                Dygraph.startPan(event, g, context);
-                            }
-                        },
-                        'mousemove' : function (event, g, context) {
-                            if (context.isPanning) {
-                                Dygraph.movePan(event, g, context);
-                            } else if (context.isZooming) {
-                                Dygraph.moveZoom(event, g, context);
-                            }
-                        },
-                        'mouseup' : function (event, g, context) {
-                            if (context.isPanning) {
-                                Dygraph.endPan(event, g, context);
-                            } else if (context.isZooming) {
-                                Dygraph.endZoom(event, g, context);
-                            }
-                        },
-                        'click' : function (event, g, context) {
-                            lastClickedGraph = g;
-                            event.preventDefault();
-                            event.stopPropagation();
-                        },
-                        'dblclick' : function (event, g, context) {
-                            g.updateOptions({
-                                dateWindow: null,
-                                valueRange: null
-                            });
-                        },
-                        'mousewheel' : null
-                    },
-                }
-            ); // Fim da definição do gráfico de análise dos dados
         };
     }
 
@@ -413,17 +204,91 @@ window.onload = function() { // início função auto-invocável
     ApiDinamometro.init();
     ApiDinamometro.startRealtimeDrawing();
 
+    function changeMapa(el) {
+        ApiDinamometro.pointSelecionado.live = false;
+        DinamometroCharts.advancedConfiguration.setVisibility(el.id, el.checked);
+    }
 
+    function aumentarAvanco(){
+        if(ApiDinamometro.pointSelecionado.live) {
+            ApiDinamometro.dataAdvancedConfiguration[ApiDinamometro.idSelecionado][DinamometroCharts.advancedConfiguration.indexFromSetName(ApiDinamometro.mapaSelecionado)] = ApiDinamometro.dataAdvancedConfiguration[ApiDinamometro.idSelecionado][DinamometroCharts.advancedConfiguration.indexFromSetName(ApiDinamometro.mapaSelecionado)]+1;
+            DinamometroCharts.advancedConfiguration.updateOptions( { 'file': ApiDinamometro.dataAdvancedConfiguration } );
+            ApiDinamometro.drawPointSelecionado();
+        }
+    }
 
+    function diminuirAvanco(){
+        if(ApiDinamometro.pointSelecionado.live) {
+            ApiDinamometro.dataAdvancedConfiguration[ApiDinamometro.idSelecionado][DinamometroCharts.advancedConfiguration.indexFromSetName(ApiDinamometro.mapaSelecionado)] = ApiDinamometro.dataAdvancedConfiguration[ApiDinamometro.idSelecionado][DinamometroCharts.advancedConfiguration.indexFromSetName(ApiDinamometro.mapaSelecionado)]-1;
+            DinamometroCharts.advancedConfiguration.updateOptions( { 'file': ApiDinamometro.dataAdvancedConfiguration } );
+            ApiDinamometro.drawPointSelecionado();
+        }
+    }
 
+    document.body.addEventListener('keydown', function(event) {
+        switch (event.key) {
+            case "ArrowLeft":
+                // Left pressed
+                break;
+            case "ArrowRight":
+                // Right pressed
+                break;
+            case "ArrowUp":
+                aumentarAvanco();
+                break;
+            case "ArrowDown":
+                diminuirAvanco();
+                break;
+        }
+    });
 
+    var ws = null;
+    var serverUrl = "ws://192.168.1.52";
 
+    var open = function() {
+        var url = serverUrl;
+        ws = new WebSocket(url);
+        ws.onopen = onOpen;
+        ws.onclose = onClose;
+        ws.onmessage = onMessage;
+        ws.onerror = onError;
+    }
 
+    var close = function() {
+        if (ws) {
+            ws.close();
+        }
+    }
 
+    var onOpen = function() {};
 
+    var onClose = function() {
+        ws = null;
+    };
 
+    var onMessage = function(event) {
+        var jsonData = JSON.parse(event.data);
+        ApiDinamometro.jsonDataReveived = jsonData;
+    };
 
+    var onError = function(event) {};
 
+    window.reconectar = function () {
+        close();
+        setTimeout(function () {
+            open();
+            setTimeout(function () {
+                ApiDinamometro.startRealtimeDrawing();
+            }, 1000);
 
+        }, 1000);
+    };
 
+    //ws.send(msg);
+
+    open();
+
+    window.aumentarAvanco = aumentarAvanco;
+    window.diminuirAvanco = diminuirAvanco;
+    window.changeMapa = changeMapa;
 }; // fim

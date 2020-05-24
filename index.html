@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Dinamômetro</title>
 
+    <!-- Carregar fontes -->
+    <link rel="stylesheet" href="fonts/fonts.css">
+
     <!-- Estilização principal da página -->
     <link rel="stylesheet" href="main.css">
 
@@ -50,7 +53,30 @@
         <div id="chart-analyze">
             <div id="analyze-dygraph" class="dygraph"></div>
         </div>
+        <div id="chart-advanced-configuration">
+            <div id="advanced-configuration-dygraph" class="dygraph"></div>
+            <div id="controles">
+                <div id="mostrar">
+                    Mostrar:<br><br>
+                    <input type="checkbox" id="0" onclick="changeMapa(this)" checked="">
+                    <label for="0" style="color: green;">Mapa avanço 1</label>
+                    <input type="checkbox" id="1" onclick="changeMapa(this)" checked="">
+                    <label for="1" style="color: blue;">Mapa avanço 2</label>
+                </div>
+
+                <div class="vl"></div>
+
+                <div id="configurar">
+                    Configurar avanço:<br><br>
+                    <button onclick="aumentarAvanco()">+ Aumentar</button>
+                    <button onclick="diminuirAvanco()">- Diminuir</button>
+                </div>
+
+            </div>
+        </div>
     </div>
+    <script src="gauges.js"></script>
+    <script src="charts.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
