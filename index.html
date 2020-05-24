@@ -52,6 +52,9 @@
         </div>
         <div id="chart-analyze">
             <div id="analyze-dygraph" class="dygraph"></div>
+            <br>
+            <button onclick="startRealtime()">Start</button>
+            <button onclick="stopRealtime()">Stop</button>
         </div>
         <div id="chart-advanced-configuration">
             <div id="advanced-configuration-dygraph" class="dygraph"></div>
@@ -75,6 +78,8 @@
             </div>
         </div>
     </div>
+    <div id="toast"></div>
+    <script src="conexao-websocket.js"></script>
     <script src="gauges.js"></script>
     <script src="charts.js"></script>
     <script src="main.js"></script>

@@ -76,12 +76,55 @@ window.onload = function() { // início função auto-invocável
         };
 
         // Flags
-        this.isRealtimeDrawing = false;
+        //this.isRealtimeDrawing = false;
 
+
+        // Flag do status em tempo real
+        this.realtimeStatus = {
+            // Constants
+            STOPPED: 0,
+            RUNNING: 1,
+            CONNECTION_LOST: 3,
+
+            // Flag
+            currentStatus: this.STOPPED,
+
+            onChange: function () {
+                if(ApiDinamometro.realtimeStatus.currentStatus==ApiDinamometro.realtimeStatus.RUNNING) {
+                    const elemento = document.getElementById('toast');
+                    elemento.innerHTML = ":) Conexão estabelecida";
+                    elemento.classList.remove('toast-fade-in');
+                    elemento.classList.add("toast-fade-out");
+                } else if (ApiDinamometro.realtimeStatus.currentStatus==ApiDinamometro.realtimeStatus.CONNECTION_LOST) {
+                    ApiDinamometro.jsonDataReveived = null;
+                    ApiDinamometro.stopRealtimeDrawing();
+                    WebSocketConnection.reconnect();
+
+                    const elemento = document.getElementById('toast');
+                    elemento.innerHTML = ":( Conexão perdida<br>Reconectando...";
+                    elemento.classList.remove("toast-fade-out");
+                    elemento.classList.add('toast-fade-in');
+                } else if (ApiDinamometro.realtimeStatus.currentStatus==ApiDinamometro.realtimeStatus.STOPPED) {
+                    ApiDinamometro.stopRealtimeDrawing();
+                }
+            },
+
+            change: function (status) {
+                if (ApiDinamometro.realtimeStatus.currentStatus!=status) {
+                    ApiDinamometro.realtimeStatus.currentStatus=status;
+                    ApiDinamometro.realtimeStatus.onChange();
+                    console.log(ApiDinamometro.realtimeStatus.currentStatus);
+                }
+            }
+        };
+
+
+        // Constantes do modo do painel
         this.DASHBOARD_MODE_BASIC = 0;
         this.DASHBOARD_MODE_ANALYSE = 1;
         this.DASHBOARD_MODE_ADVANCED_CONFIGURATION = 2;
 
+        // Flag do modo do painel
         this.dashboardMode = this.DASHBOARD_MODE_BASIC;
 
         this.draw = function (idx) {
@@ -94,7 +137,7 @@ window.onload = function() { // início função auto-invocável
                 avancoReal: 0
             };
 
-            if(idx && !this.isRealtimeDrawing) {
+            if(idx && this.realtimeStatus.currentStatus!=this.realtimeStatus.RUNNING) {
                 data.rpm = this.dataAnalyse[idx][1]*100;
                 data.lambda = this.dataAnalyse[idx][2];
                 data.torque = this.dataAnalyse[idx][3];
@@ -108,7 +151,7 @@ window.onload = function() { // início função auto-invocável
                 data.avancoReal = this.dataAnalyse[this.dataAnalyse.length-1][5];
             }
 
-            if(this.isRealtimeDrawing) {
+            if(this.realtimeStatus.currentStatus==this.realtimeStatus.RUNNING) {
                 DinamometroCharts.analyze.updateOptions( { 'file': this.dataAnalyse } );
             }
 
@@ -125,7 +168,7 @@ window.onload = function() { // início função auto-invocável
 
             DinamometroCharts.analyze.updateOptions({
                 drawHighlightPointCallback: function(g, seriesName, canvasContext, cx, cy, color, pointSize, idx){
-                    if(!ApiDinamometro.isRealtimeDrawing && g.indexFromSetName(seriesName)==1) ApiDinamometro.draw(idx);
+                    if(ApiDinamometro.realtimeStatus.currentStatus!=ApiDinamometro.realtimeStatus.RUNNING && g.indexFromSetName(seriesName)==1) ApiDinamometro.draw(idx);
                 }
             });
 
@@ -160,38 +203,48 @@ window.onload = function() { // início função auto-invocável
         };
 
         this.stopRealtimeDrawing = function () {
-            this.isRealtimeDrawing = false;
+            //this.isRealtimeDrawing = false;
             DinamometroGauges.setAnimationDuration(500);
         };
 
         this.startRealtimeDrawing = function () {
-            this.isRealtimeDrawing = true;
+
+
+
+
+            //this.isRealtimeDrawing = true;
             DinamometroGauges.setAnimationDuration(0);
 
             var ultimoTempo = 0;
             var contPerda = 0;
             this.dataAnalyse = [];
-            window.dataData = null;
+            if (ApiDinamometro.jsonDataReveived) ApiDinamometro.realtimeStatus.change(ApiDinamometro.realtimeStatus.RUNNING);
 
             function loop() {
-                if (this.jsonDataReveived) {
-                    if(this.dataAnalyse.length>=50 && this.jsonDataReveived.tempo!=ultimoTempo) this.dataAnalyse.splice(0, 1);
+                if (ApiDinamometro.jsonDataReveived) {
+                    if (ApiDinamometro.jsonDataReveived.tempo!=ultimoTempo) {
+                        if(this.dataAnalyse.length>=50) ApiDinamometro.dataAnalyse.splice(0, 1);
+                    }
 
-                    this.dataAnalyse.push([parseFloat(this.jsonDataReveived.tempo.toFixed(2)), this.jsonDataReveived.rpm/100, this.jsonDataReveived.lambda, this.jsonDataReveived.torque, this.jsonDataReveived.voltagemBateria, this.jsonDataReveived.avancoReal]);
+                    this.dataAnalyse.push([parseFloat(ApiDinamometro.jsonDataReveived.tempo.toFixed(2)), ApiDinamometro.jsonDataReveived.rpm/100, ApiDinamometro.jsonDataReveived.lambda, ApiDinamometro.jsonDataReveived.torque, ApiDinamometro.jsonDataReveived.voltagemBateria, ApiDinamometro.jsonDataReveived.avancoReal]);
 
-                    if(this.dataAnalyse.length>0) this.draw();
+                    if(ApiDinamometro.dataAnalyse.length>0) ApiDinamometro.draw();
 
-                    if (this.jsonDataReveived.tempo==ultimoTempo){
+                    if (ApiDinamometro.jsonDataReveived.tempo===ultimoTempo){
                         contPerda++;
                     }
 
-                    ultimoTempo = this.jsonDataReveived.tempo;
+                    ultimoTempo = ApiDinamometro.jsonDataReveived.tempo;
                 }
 
-                if(!(contPerda>=50)) {
+                if (contPerda>=30){
+                    ApiDinamometro.realtimeStatus.change(ApiDinamometro.realtimeStatus.CONNECTION_LOST);
+                }
+
+                if(ApiDinamometro.realtimeStatus.currentStatus==ApiDinamometro.realtimeStatus.RUNNING) {
                     requestAnimationFrame(loop.bind(this));
                 } else {
-                    this.stopRealtimeDrawing();
+                    //alert(ApiDinamometro.realtimeStatus.currentStatus);
                 }
             }
 
@@ -199,10 +252,23 @@ window.onload = function() { // início função auto-invocável
         };
     }
 
-    var ApiDinamometro = new Dinamometro();
+    WebSocketConnection.init("ws://192.168.1.52");
+
+    WebSocketConnection.addEventListener('onConnect', function() {
+        ApiDinamometro.startRealtimeDrawing();
+    });
+
+    WebSocketConnection.addEventListener('onMessage', function(data) {
+        var jsonData = JSON.parse(data);
+        ApiDinamometro.jsonDataReveived = jsonData;
+    });
+
+    WebSocketConnection.connect();
+
+    window.ApiDinamometro = new Dinamometro();
 
     ApiDinamometro.init();
-    ApiDinamometro.startRealtimeDrawing();
+    //ApiDinamometro.startRealtimeDrawing();
 
     function changeMapa(el) {
         ApiDinamometro.pointSelecionado.live = false;
@@ -242,52 +308,16 @@ window.onload = function() { // início função auto-invocável
         }
     });
 
-    var ws = null;
-    var serverUrl = "ws://192.168.1.52";
-
-    var open = function() {
-        var url = serverUrl;
-        ws = new WebSocket(url);
-        ws.onopen = onOpen;
-        ws.onclose = onClose;
-        ws.onmessage = onMessage;
-        ws.onerror = onError;
+    function startRealtime(){
+        if(ApiDinamometro.realtimeStatus.currentStatus==ApiDinamometro.realtimeStatus.STOPPED) ApiDinamometro.startRealtimeDrawing();
     }
 
-    var close = function() {
-        if (ws) {
-            ws.close();
-        }
+    function stopRealtime(){
+        ApiDinamometro.realtimeStatus.change(ApiDinamometro.realtimeStatus.STOPPED);
     }
 
-    var onOpen = function() {};
-
-    var onClose = function() {
-        ws = null;
-    };
-
-    var onMessage = function(event) {
-        var jsonData = JSON.parse(event.data);
-        ApiDinamometro.jsonDataReveived = jsonData;
-    };
-
-    var onError = function(event) {};
-
-    window.reconectar = function () {
-        close();
-        setTimeout(function () {
-            open();
-            setTimeout(function () {
-                ApiDinamometro.startRealtimeDrawing();
-            }, 1000);
-
-        }, 1000);
-    };
-
-    //ws.send(msg);
-
-    open();
-
+    window.startRealtime = startRealtime;
+    window.stopRealtime = stopRealtime;
     window.aumentarAvanco = aumentarAvanco;
     window.diminuirAvanco = diminuirAvanco;
     window.changeMapa = changeMapa;

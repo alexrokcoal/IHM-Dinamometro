@@ -97,3 +97,47 @@ body {
     padding: 0 10px;
 }
 
+#toast {
+    position: fixed;
+    top: 40px;
+    right: 10px;
+    padding: 10px;
+    display: none;
+    opacity: 0;
+}
+
+.toast-fade-in {
+    display: block !important;
+    opacity: 1 !important;
+    background-color: rgba(255, 8, 0, 0.57) !important;
+    border: 1px solid red;
+    border-radius: 5px;
+    animation: spin-in 1s ease-out 1;
+}
+
+.toast-fade-out {
+    display: block !important;
+    opacity: 0 !important;
+    background-color: rgba(3, 255, 0, 0.44) !important;
+    border: 1px solid green;
+    border-radius: 5px;
+    animation: spin-out 1s ease-in 1;
+}
+
+@keyframes spin-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+@keyframes spin-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
