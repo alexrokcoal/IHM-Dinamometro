@@ -104,40 +104,47 @@ body {
     padding: 10px;
     display: none;
     opacity: 0;
+    transition: opacity 2s;
+    border-radius: 5px;
 }
 
-.toast-fade-in {
-    display: block !important;
-    opacity: 1 !important;
-    background-color: rgba(255, 8, 0, 0.57) !important;
+#toast.toast-fade-in {
+    display: block;
+    opacity: 1;
+    background-color: rgba(255, 8, 0, 0.57);
     border: 1px solid red;
-    border-radius: 5px;
-    animation: spin-in 1s ease-out 1;
+    transition-timing-function: cubic-bezier(0, 1, 1, 1);
 }
 
-.toast-fade-out {
-    display: block !important;
-    opacity: 0 !important;
-    background-color: rgba(3, 255, 0, 0.44) !important;
+#toast.toast-fade-out {
+    display: block;
+    opacity: 0;
+    background-color: rgba(3, 255, 0, 0.44);
     border: 1px solid green;
-    border-radius: 5px;
-    animation: spin-out 1s ease-in 1;
+    transition-timing-function: cubic-bezier(1, 1, 1, 1);
 }
 
-@keyframes spin-in {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
-}
-@keyframes spin-out {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
+#container #chart-advanced-configuration {
+    display: block !important;
 }
 
+#container.analyse #chart-advanced-configuration {
+    display: none !important;
+}
+
+#logo-multscan {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100px;
+    height: 50px;
+    background: transparent url("assets/img/logo-multscan.png") center no-repeat;
+    background-size: 100px auto;
+    padding: 10px;
+    opacity: 0.4;
+    transition: opacity 200ms ease-out;
+}
+
+#logo-multscan:hover {
+    opacity: 0.9;
+}

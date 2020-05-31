@@ -252,7 +252,7 @@ window.onload = function() { // início função auto-invocável
         };
     }
 
-    WebSocketConnection.init("ws://192.168.1.52");
+    WebSocketConnection.init("ws://192.168.1.23");
 
     WebSocketConnection.addEventListener('onConnect', function() {
         ApiDinamometro.startRealtimeDrawing();
