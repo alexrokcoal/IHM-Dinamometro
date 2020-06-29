@@ -106,7 +106,7 @@ DinamometroGauges.prototype.init = function () {
             minValue: 0,
             maxValue: 30,
             majorTicks: [
-                '0','2.5','5','15','20','25','30'
+                '0','5','10','15','20','25','30'
             ],
             highlights: [
                 { from: 0, to: 30, color: 'rgba(187,187,187,.1)' }
