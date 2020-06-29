@@ -5,10 +5,10 @@
     <title>Dinamômetro</title>
 
     <!-- Carregar fontes -->
-    <link rel="stylesheet" href="fonts/fonts.css">
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
 
     <!-- Estilização principal da página -->
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="styles/main.css">
 
     <!-- Biblioteca Dygraph -->
     <script src="libs/dygraph/js/dygraph.min.js"></script> <!-- Código da biblioteca Dygraph -->
@@ -20,69 +20,123 @@
 
 </head>
 <body>
-    <div id="header">
-
+    <div id="menu-container">
+        <div id="logo-multscan"></div>
+        <div>
+            <ul class="menu">
+                <li><a>Modo de exibição</a>
+                    <ul>
+                        <li><a onclick="DINAMOMETRO.dashboard.mode.set(DINAMOMETRO.dashboard.mode.PRESENTATION);">Apresentação</a></li>
+                        <li><a onclick="DINAMOMETRO.dashboard.mode.set(DINAMOMETRO.dashboard.mode.ANALYSE);">Análise</a></li>
+                        <li><a onclick="DINAMOMETRO.dashboard.mode.set(DINAMOMETRO.dashboard.mode.CONFIGURATION);">Configuração</a></li>
+                        <li><a onclick="DINAMOMETRO.dashboard.mode.set(DINAMOMETRO.dashboard.mode.ADVANCED);">Avançado</a></li>
+                    </ul>
+                </li>
+                <li><a>Configurações</a>
+                    <ul>
+                        <li><a onclick="DINAMOMETRO.changeServerIp();">Ip do Servidor</a></li>
+                        <li><a onclick="DINAMOMETRO.changeFrameRate(parseInt(prompt('Digite um valor da taxa de frames por segundo (4 à 60 frames): ', '30')));">Taxa frames</a></li>
+                        <li><a onclick="DINAMOMETRO.setDataFrameBufferMaxSize(parseInt(prompt('Informe o tamanho do buffer: ', '50')));">Tamanho do buffer</a></li>
+                    </ul>
+                </li>
+                <li><a>Sobre</a></li>
+            </ul>
+        </div>
     </div>
 
-    <div id="container" class="analyse">
-        <div id="gauges">
-
-
+    <div id="content-container">
+        <div id="gauges-container" class="hidden">
                 <div>
-                    <span>Avanço Real</span><br>
-                    <canvas id="canvas-avanco-real-gauge"></canvas>
+                    <span>Lambda</span><br>
+                    <canvas id="canvas-lambda-gauge"></canvas>
                 </div>
                 <div>
                     <span>Torque</span><br>
                     <canvas id="canvas-torque-gauge"></canvas>
                 </div>
                 <div>
-                    <span>RPM Motor</span><br>
+                    <span>RPM</span><br>
                     <canvas id="canvas-rpm-gauge"></canvas>
                 </div>
                 <div>
-                    <span>Sonda Lambda</span><br>
-                    <canvas id="canvas-lambda-gauge"></canvas>
+                    <span>Avanco</span><br>
+                    <canvas id="canvas-avanco-real-gauge"></canvas>
                 </div>
+
                 <div>
-                    <span>Voltagem Bateria</span><br>
+                    <span>Bateria</span><br>
                     <canvas id="canvas-voltagem-bateria-gauge"></canvas>
                 </div>
 
         </div>
-        <div id="chart-analyze">
+        <div id="chart-analyze-container" class="hidden">
             <div id="analyze-dygraph" class="dygraph"></div>
             <br>
-            <button onclick="startRealtime()">Start</button>
-            <button onclick="stopRealtime()">Stop</button>
+            <div>
+                <button title="Start" id="btn-control">&#9658;</button>
+                <div id="analyse-controls">
+                    Mostrar:
+                    <div>
+                        <input type="checkbox" id="0" onclick="DINAMOMETRO.graphics.charts.analyze.changeAnalyse(this)" checked="">
+                        <label for="0">RPM</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="1" onclick="DINAMOMETRO.graphics.charts.analyze.changeAnalyse(this)" checked="">
+                        <label for="1">Lambda</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="2" onclick="DINAMOMETRO.graphics.charts.analyze.changeAnalyse(this)" checked="">
+                        <label for="2">Torque</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="3" onclick="DINAMOMETRO.graphics.charts.analyze.changeAnalyse(this)" checked="">
+                        <label for="3">Bateria</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="4" onclick="DINAMOMETRO.graphics.charts.analyze.changeAnalyse(this)" checked="">
+                        <label for="4">Avanço</label>
+                    </div>
+                </div>
+            </div>
+            <br>
         </div>
-        <div id="chart-advanced-configuration">
-            <div id="advanced-configuration-dygraph" class="dygraph"></div>
+        <div id="chart-configuration-container" class="hidden">
+            <div id="configuration-dygraph" class="dygraph"></div>
             <div id="controles">
                 <div id="mostrar">
                     Mostrar:<br><br>
-                    <input type="checkbox" id="0" onclick="changeMapa(this)" checked="">
-                    <label for="0" style="color: green;">Mapa avanço 1</label>
-                    <input type="checkbox" id="1" onclick="changeMapa(this)" checked="">
-                    <label for="1" style="color: blue;">Mapa avanço 2</label>
+                    <input type="checkbox" id="mapa-0" value="0" onclick="DINAMOMETRO.graphics.charts.configuration.changeMapa(this);" checked="">
+                    <label for="mapa-0" style="color: green;">Mapa avanço 1</label>
+                    <input type="checkbox" id="mapa-1" value="1" onclick="DINAMOMETRO.graphics.charts.configuration.changeMapa(this);" checked="">
+                    <label for="mapa-1" style="color: blue;">Mapa avanço 2</label>
                 </div>
 
                 <div class="vl"></div>
 
                 <div id="configurar">
                     Configurar avanço:<br><br>
-                    <button onclick="aumentarAvanco()">+ Aumentar</button>
-                    <button onclick="diminuirAvanco()">- Diminuir</button>
+                    <button onclick="DINAMOMETRO.graphics.charts.configuration.aumentarAvanco();">+ Aumentar</button>
+                    <button onclick="DINAMOMETRO.graphics.charts.configuration.diminuirAvanco();">- Diminuir</button>
                 </div>
-
             </div>
         </div>
     </div>
-    <div id="toast"></div>
-    <div id="logo-multscan"></div>
-    <script src="conexao-websocket.js"></script>
-    <script src="gauges.js"></script>
-    <script src="charts.js"></script>
-    <script src="main.js"></script>
+    <div id="feedback-connection"></div>
+
+    <!-- Scripts da aplicação -->
+    <script src="src/dinamometro.js"></script>
+    <script src="src/dinamometro-status.js"></script>
+    <script src="src/connection/connection.js"></script>
+    <script src="src/dashboard/dashboard.js"></script>
+    <script src="src/dashboard/dashboard-user-interface.js"></script>
+    <script src="src/dashboard/dashboard-mode.js"></script>
+    <script src="src/graphics/graphics.js"></script>
+    <script src="src/graphics/gauges/numeric-gauge.js"></script>
+    <script src="src/graphics/gauges/gauges.js"></script>
+    <script src="src/graphics/charts/charts.js"></script>
+    <script src="src/graphics/charts/charts-analyse-chart.js"></script>
+    <script src="src/graphics/charts/charts-configuration-chart.js"></script>
+    <script src="src/storage/storage.js"></script>
+    <script src="src/main.js"></script>
 </body>
 </html>

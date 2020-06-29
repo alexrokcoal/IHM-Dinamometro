@@ -26,3 +26,13 @@ Devido a necessidade de atualização de dados em tempo real, foi escohido o pro
 * **Configuração:** Apresenta os gauges e o gráfico de configuração;
 * **Avançado:** Apresenta os gauges, o gráfico de análise e o gráfico de configuração;
 
+### Estrutura da aplicação:
+* Dinamômetro IHM:
+    * Connection;
+    * Dashboard;
+        * Views;
+    * Graphics;
+        * Charts;
+        * Gauges;
+    * Storage;
+
