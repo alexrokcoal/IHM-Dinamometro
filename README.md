@@ -1,6 +1,8 @@
 # IHM Dinamômetro
 É uma IHM (interface homem máquina) web, criada para interação com um dinamômetro, mostrando em tempo real dados do dinamômetro como: RPM do motor, torque, e outros dados essenciais. O objetivo da criação deste projeto é obter mais conhecimento e aprender mais sobre sistemas de interação hardware e software.
 
+![Imagem da tela](https://raw.githubusercontent.com/alexrokcoal/IHM-Dinamometro/master/Imagem%20da%20tela.jpg)
+
 ### Como é o hardware?
 É construído basicamente por um motor com seu eixo ligado em um mecanismo que produz resistência. Assim é possível medir o torque para obter o desempenho do motor em diversas condições. O dinamômetro foi desenvolvido com o ESP32, responsável por gerenciar o funcionamento do dinamômetro e interagir com a IHM.  
 
