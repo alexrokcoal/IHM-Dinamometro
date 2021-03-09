@@ -1,6 +1,8 @@
 # IHM Dinamômetro
 É uma IHM (interface homem máquina) web, criada para interação com um dinamômetro, mostrando em tempo real dados do dinamômetro como: RPM do motor, torque, e outros dados essenciais. O objetivo da criação deste projeto é obter mais conhecimento e aprender mais sobre sistemas de interação hardware e software.
 
+Veja a interface funcionando ([Aqui](https://alexrokcoal.github.io/IHM-Dinamometro/)), porém você vai precisar do hardware para receber os dados;
+
 ![Imagem da tela](https://raw.githubusercontent.com/alexrokcoal/IHM-Dinamometro/master/Imagem%20da%20tela.jpg)
 
 ### Como é o hardware?
